@@ -1,0 +1,99 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+**# Load the dataset**
+df = pd.read_csv(r'C:\Users\dell\Downloads\archive\placement.csv')
+
+# Display the first few rows and check columns
+print(df.head())
+print(df.columns)
+
+**# Scatter plot to visualize CGPA vs Placement exam marks**
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='cgpa', y='placement_exam_marks', hue='placed', data=df, palette='Set1')
+plt.title('CGPA vs Placement Exam Marks')
+plt.xlabel('CGPA')
+plt.ylabel('Placement Exam Marks')
+plt.show()
+
+# Define features (X) and target variable (y)
+X = df[['cgpa', 'placement_exam_marks']]
+y = df['placed']
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize the model
+model = LogisticRegression()
+
+# Train the model on the training data
+model.fit(X_train, y_train)
+
+# Predictions on the test set
+y_pred = model.predict(X_test)
+
+# Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy of the model: {accuracy:.2f}')
+
+# Confusion matrix
+conf_matrix = confusion_matrix(y_test, y_pred)
+print('Confusion Matrix:')
+print(conf_matrix)
+
+# Classification report
+class_report = classification_report(y_test, y_pred)
+print('Classification Report:')
+print(class_report)
+
+# Visualize decision boundary and data points
+plt.figure(figsize=(10, 6))
+
+# Plot decision boundary (for binary classification only)
+x_min, x_max = X.iloc[:, 0].min() - 1, X.iloc[:, 0].max() + 1
+y_min, y_max = X.iloc[:, 1].min() - 1, X.iloc[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                     np.arange(y_min, y_max, 0.1))
+Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, alpha=0.3, cmap='Set1')
+
+# Plot data points
+sns.scatterplot(x='cgpa', y='placement_exam_marks', hue='placed', data=df, palette='Set1')
+plt.title('Logistic Regression - Placement Prediction')
+plt.xlabel('CGPA')
+plt.ylabel('Placement Exam Marks')
+plt.xlim(xx.min(), xx.max())
+plt.ylim(yy.min(), yy.max())
+plt.legend(loc='best')
+plt.show()
+
+from sklearn.metrics import roc_curve, auc
+
+# Predict probabilities for ROC curve
+y_prob = model.predict_proba(df[['cgpa', 'placement_exam_marks']])[:, 1]
+
+# Compute ROC curve and AUC
+fpr, tpr, thresholds = roc_curve(df['placed'], y_prob)
+roc_auc = auc(fpr, tpr)
+
+# Plot ROC curve
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (AUC = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC)')
+plt.legend(loc='lower right')
+plt.show()
+
+
+
+
